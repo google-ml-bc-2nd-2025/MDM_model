@@ -47,6 +47,12 @@ def get_args():
     args.lambda_vel = 0.0
     args.lambda_rcxyz = 0.0
     args.lambda_fc   = 0.0
+
+    args.diffusion_steps   = 50            # MDM 논문 기반 빠른 모델이라면 50
+    args.pos_embed_max_len = 5000          # get_model_args에서 사용
+    args.mask_frames       = False         # 동일
+    args.text_encoder_type = 'clip'        # get_model_args에서 사용
+    
     return args
 
 
