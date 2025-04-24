@@ -1,6 +1,8 @@
 import pydantic.main
 from pydantic import BaseModel as PydanticBaseModel
 pydantic.main.ModelMetaclass = PydanticBaseModel.__class__
+import subprocess
+import json
 
 
 from fastapi import FastAPI
@@ -44,6 +46,56 @@ predictor = Predictor()
 async def on_startup():
     # Load model, diffusion, and cache CLIP weights
     predictor.setup()
+
+
+@app.post("/generate", response_model=PredictResponse)
+def generate_motion(req: PredictRequest):
+    # Run the sample.generate script as a subprocess
+    cmd = [
+        "python", "-m", "sample.generate",
+        "--model_path", "./save/humanml_trans_enc_512/model000200000.pt",
+        "--text_prompt", req.prompt,
+        "--num_repetitions", str(1),
+        "--num_samples", str(1),
+        "--output_format","json"
+    ]
+
+    # if req.num_repetitions != 3:
+    #     cmd.extend(["--num_samples", str(1)])
+    
+    # if req.output_format != "animation":
+    #     cmd.extend(["--output_format", req.output_format])
+    
+    # Run the command and capture output
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    
+    # Parse the output to extract file paths
+    output_lines = result.stdout.strip().split('\n')
+    animation_paths = [line.strip() for line in output_lines if line.strip().endswith('.mp4')]
+    
+    # If animation format
+    if req.output_format == "animation":
+        return PredictResponse(
+            animation=animation_paths if animation_paths else None,
+            json_file=None
+        )
+    else:
+        # Try to find JSON output in the command output
+        json_file = None
+        for line in output_lines:
+            if line.strip().endswith('.json'):
+                try:
+                    with open(line.strip(), 'r') as f:
+                        json_file = json.load(f)
+                    break
+                except:
+                    pass
+                
+        return PredictResponse(
+            animation=None,
+            json_file=json_file
+        )
+
 
 @app.post("/predict", response_model=PredictResponse)
 def predict_motion(req: PredictRequest):
