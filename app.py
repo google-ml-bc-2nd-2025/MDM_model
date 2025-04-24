@@ -1,8 +1,6 @@
 import pydantic.main
 from pydantic import BaseModel as PydanticBaseModel
 pydantic.main.ModelMetaclass = PydanticBaseModel.__class__
-import subprocess
-import json
 
 
 from fastapi import FastAPI
@@ -66,8 +64,41 @@ def generate_motion(req: PredictRequest):
     # if req.output_format != "animation":
     #     cmd.extend(["--output_format", req.output_format])
     
+    import subprocess
+    import json
+    import os
+    from datetime import datetime
+
     # Run the command and capture output
     result = subprocess.run(cmd, capture_output=True, text=True)
+    # Check if command was successful
+    if result.returncode != 0:
+        raise RuntimeError(f"Command failed with error: {result.stderr}")
+
+    # Get the latest model file in the specified directory
+    model_dir = "save/my_humalml_trans_enc_512"
+    try:
+        # Get all .npy files in the directory and subdirectories
+        npy_files = []
+        for root, dirs, files in os.walk(model_dir):
+            for file in files:
+                if file.endswith('.npy'):
+                    full_path = os.path.join(root, file)
+                    # Get file creation time
+                    file_time = datetime.fromtimestamp(os.path.getctime(full_path))
+                    npy_files.append((full_path, file_time))
+
+        # Sort by creation time (newest first)
+        npy_files.sort(key=lambda x: x[1], reverse=True)
+
+        # Get the latest .npy file path if any were found
+        latest_npy = npy_files[0][0] if npy_files else None
+        if latest_npy:
+            print(f"Found latest .npy file: {latest_npy}")
+        else:
+            print("No .npy files found in the model directory")
+    except Exception as e:
+        print(f"Error finding latest model: {e}")
     
     # Parse the output to extract file paths
     output_lines = result.stdout.strip().split('\n')
