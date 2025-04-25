@@ -1,6 +1,8 @@
 import pydantic.main
 from pydantic import BaseModel as PydanticBaseModel
 pydantic.main.ModelMetaclass = PydanticBaseModel.__class__
+import subprocess
+import json
 
 
 from fastapi import FastAPI
@@ -51,23 +53,19 @@ def generate_motion(req: PredictRequest):
     # Run the sample.generate script as a subprocess
     cmd = [
         "python", "-m", "sample.generate",
-        "--model_path", "./save/humanml_trans_enc_512/model000200000.pt",
+        "--model_path", "./save/humanml_mixamo_trans_enc_512/model000200000.pt",
         "--text_prompt", req.prompt,
         "--num_repetitions", str(1),
         "--num_samples", str(1),
-        "--output_format","json"
+        #"--output_format","json_file"
     ]
 
-    # if req.num_repetitions != 3:
-    #     cmd.extend(["--num_samples", str(1)])
-    
-    # if req.output_format != "animation":
-    #     cmd.extend(["--output_format", req.output_format])
-    
+
     import subprocess
     import json
     import os
     from datetime import datetime
+    import numpy as np
 
     # Run the command and capture output
     result = subprocess.run(cmd, capture_output=True, text=True)
@@ -76,7 +74,7 @@ def generate_motion(req: PredictRequest):
         raise RuntimeError(f"Command failed with error: {result.stderr}")
 
     # Get the latest model file in the specified directory
-    model_dir = "save/my_humalml_trans_enc_512"
+    model_dir = "save/humanml_mixamo_trans_enc_512"
     try:
         # Get all .npy files in the directory and subdirectories
         npy_files = []
@@ -94,37 +92,31 @@ def generate_motion(req: PredictRequest):
         # Get the latest .npy file path if any were found
         latest_npy = npy_files[0][0] if npy_files else None
         if latest_npy:
-            print(f"Found latest .npy file: {latest_npy}")
+            # Load the latest .npy file
+            with open(latest_npy, 'rb') as f:
+                latest_model = np.load(f, allow_pickle=True)
+
+            # Extract the 'motion' value from the loaded numpy file
+            if 'motion' in latest_model.item():
+                print("latest_model has motion ")
+                return PredictResponse(
+                    animation=None,
+                    json_file={
+                        'thetas':latest_model.item()['motion'].tolist(),
+                        'root_translations':np.zeros((latest_model['motion'].shape[0], 3)).tolist(),
+                    }
+                )
+            else:
+                print("key error!!")
+                raise KeyError("The loaded .npy file does not contain 'motion' key.")
+
         else:
             print("No .npy files found in the model directory")
     except Exception as e:
         print(f"Error finding latest model: {e}")
-    
-    # Parse the output to extract file paths
-    output_lines = result.stdout.strip().split('\n')
-    animation_paths = [line.strip() for line in output_lines if line.strip().endswith('.mp4')]
-    
-    # If animation format
-    if req.output_format == "animation":
-        return PredictResponse(
-            animation=animation_paths if animation_paths else None,
-            json_file=None
-        )
-    else:
-        # Try to find JSON output in the command output
-        json_file = None
-        for line in output_lines:
-            if line.strip().endswith('.json'):
-                try:
-                    with open(line.strip(), 'r') as f:
-                        json_file = json.load(f)
-                    break
-                except:
-                    pass
-                
         return PredictResponse(
             animation=None,
-            json_file=json_file
+            json_file={"error":str(e)}
         )
 
 
@@ -150,5 +142,5 @@ def predict_motion(req: PredictRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app:app", host="0.0.0.0", port=2199, reload=True)
+    uvicorn.run("app:app", host="0.0.0.0", port=8384, reload=True)
 
