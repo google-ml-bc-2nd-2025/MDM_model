@@ -31,7 +31,7 @@ class ModelOutput(BaseModel):
 def get_args():
     args = Namespace()
     args.fps = 20
-    args.model_path = './save/humanml_trans_enc_512/model000200000.pt'
+    args.model_path = './save/humanml_mixamo2_trans_enc_512/model000400000.pt'
     args.guidance_param = 2.5
     args.unconstrained = False
     args.dataset = 'humanml'
