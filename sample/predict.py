@@ -147,7 +147,11 @@ class Predictor(BasePredictor):
         all_motions = sample.cpu().numpy()
 
         if output_format == 'json_file':
-            data_dict = motions2hik(all_motions)
+            motions_xyz = [
+                all_motions[i].transpose(2, 0, 1)[:self.num_frames].tolist()
+                for i in range(args.num_repetitions)
+            ]
+            data_dict = {"motions": motions_xyz}
             return ModelOutput(json_file=data_dict)
 
         caption = str(prompt)
