@@ -170,7 +170,7 @@ def generate_motion(req: PredictRequest):
 
 @app.post("/predict", response_model=PredictResponse)
 def predict_motion(req: PredictRequest):
-    # 프롬프트 정제 추가
+    # 프롬프트 정제 (이미 추가되어 있다고 가정)
     refined_prompt = refine_prompt(req.prompt)
     # Run inference with 정제된 프롬프트
     output: ModelOutput = predictor.predict(
@@ -178,17 +178,17 @@ def predict_motion(req: PredictRequest):
         num_repetitions=req.num_repetitions,
         output_format=req.output_format
     )
-    # Prepare response
-    if req.output_format == "animation":
-        return PredictResponse(
-            animation=convert_path_list(output.animation),
-            json_file=None
-        )
+    # motions array만 반환
+    motions = None
+    if hasattr(output, "motions"):
+        motions = output.motions
+    elif hasattr(output, "json_file") and output.json_file and "motions" in output.json_file:
+        motions = output.json_file["motions"]
+    elif hasattr(output, "json_file") and output.json_file and "thetas" in output.json_file:
+        motions = output.json_file["thetas"]
     else:
-        return PredictResponse(
-            animation=None,
-            json_file=output.json_file
-        )
+        motions = []
+    return {"json_file": {"motions": motions}}
 
 if __name__ == "__main__":
     import uvicorn
