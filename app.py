@@ -25,8 +25,8 @@ def convert_path_list(paths: Optional[List[Path]]) -> Optional[List[str]]:
 
 class PredictRequest(BaseModel):
     prompt: str
-    num_repetitions: int = 3
-    output_format: str = "animation"
+    num_repetitions: int = 1
+    output_format: str = "smpl"
 
 class PredictResponse(BaseModel):
     json_file: Optional[Any]
@@ -128,17 +128,11 @@ def predict_motion(req: PredictRequest):
         num_repetitions=req.num_repetitions,
         output_format=req.output_format
     )
-    # Prepare response
-    if req.output_format == "animation":
-        return PredictResponse(
-            animation=convert_path_list(output.animation),
-            json_file=None
-        )
-    else:
-        return PredictResponse(
-            animation=None,
-            json_file=output.json_file
-        )
+
+    return PredictResponse(
+        animation=None,
+        json_file=output.json_file
+    )
 
 if __name__ == "__main__":
     import uvicorn

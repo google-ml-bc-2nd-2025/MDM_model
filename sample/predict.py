@@ -96,8 +96,8 @@ class Predictor(BasePredictor):
                 is an [nframes x njoints x 3] array of joint rotations in degrees, "root_translation" is an [nframes x 3] \
                 array of (X, Y, Z) positions of the root, and "joint_map" is a list mapping the SMPL joint index to the\
                 corresponding HumanIK joint name',
-                default="animation",
-                choices=["animation", "json_file"],
+                default="smpl",
+                choices=["smpl", "json_file", "humanml3d"],
             ),
     ) -> ModelOutput:
         args = self.args
@@ -146,32 +146,14 @@ class Predictor(BasePredictor):
 
         all_motions = sample.cpu().numpy()
 
-        if output_format == 'json_file':
+        if output_format == 'json_file' or output_format == 'humanml3d':
+            #return humanml3d           
             motions_xyz = [
                 all_motions[i].transpose(2, 0, 1)[:self.num_frames].tolist()
                 for i in range(args.num_repetitions)
             ]
             data_dict = {"motions": motions_xyz}
-            return ModelOutput(json_file=data_dict)
+        else:
+            data_dict = motions2hik(all_motions)
 
-        caption = str(prompt)
-
-        skeleton = paramUtil.t2m_kinematic_chain
-
-        sample_print_template, row_print_template, all_print_template, \
-            sample_file_template, row_file_template, all_file_template = construct_template_variables(
-            args.unconstrained)
-
-        rep_files = []
-        replicate_fnames = []
-        for rep_i in range(args.num_repetitions):
-            motion = all_motions[rep_i].transpose(2, 0, 1)[:self.num_frames]
-            save_file = sample_file_template.format(1, rep_i)
-            print(sample_print_template.format(caption, 1, rep_i, save_file))
-            plot_3d_motion(save_file, skeleton, motion, dataset=args.dataset, title=caption, fps=args.fps)
-            # Credit for visualization: https://github.com/EricGuo5513/text-to-motion
-            rep_files.append(save_file)
-
-            replicate_fnames.append(Path(save_file))
-
-        return ModelOutput(animation=replicate_fnames)
+        return ModelOutput(json_file=data_dict)
