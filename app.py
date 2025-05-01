@@ -188,7 +188,14 @@ def predict_motion(req: PredictRequest):
         motions = output.json_file["thetas"]
     else:
         motions = []
-    return {"json_file": {"motions": motions}}
+
+    import numpy as np
+    # motions가 numpy array가 아니면 변환
+    motions_np = np.array(motions)
+    shape = list(motions_np.shape)
+    framecount = shape[0] if len(shape) > 0 else 0
+
+    return {"json_file": {"motions": motions, "shape": shape, "framecount": framecount}}
 
 if __name__ == "__main__":
     import uvicorn
