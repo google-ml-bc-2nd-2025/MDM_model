@@ -106,11 +106,9 @@ mv humanml_mixamo2_trans_enc_512 save/humanml_mixamo2_trans_enc_512
 
 ```bash
 python -m sample.generate \
-  --model_path ./save/humanml_trans_enc_512/model000200000.pt \
+  --model_path ./save/humanml_mixamo2_trans_enc_512/model000400000.pt \
   --num_samples 10 \
   --num_repetitions 3
 ```
 
 ## License
-
-This project is released under the MIT License. See [LICENSE](LICENSE) for details.
