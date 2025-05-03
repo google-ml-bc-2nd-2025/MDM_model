@@ -26,8 +26,8 @@ def convert_path_list(paths: Optional[List[Path]]) -> Optional[List[str]]:
 
 class PredictRequest(BaseModel):
     prompt: str
-    num_repetitions: int = 3
-    output_format: str = "animation"
+    num_repetitions: int = 1
+    output_format: str = "smpl"
 
 class PredictResponse(BaseModel):
     json_file: Optional[Any]
