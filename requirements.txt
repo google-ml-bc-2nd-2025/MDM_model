@@ -1,0 +1,52 @@
+# requirements.txt
+
+# Machine Learning & Deep Learning
+torch
+torchvision
+torchaudio
+h5py
+numpy<1.24
+scipy
+scikit-learn
+joblib
+
+# Web & API
+fastapi
+uvicorn
+pydantic
+
+# Data processing & Utilities
+beautifulsoup4
+gdown
+requests
+tqdm
+typer
+wandb
+
+# NLP & 3D Vision
+spacy
+trimesh
+
+# Supporting libraries
+jinja2
+regex
+
+# pip 전용 패키지
+blis
+chumpy
+click
+confection
+ftfy
+importlib-metadata
+lxml
+murmurhash
+preshed
+pycryptodomex
+smplx
+srsly
+thinc
+typing-extensions
+urllib3
+wasabi
+wcwidth
+google.generativeai
