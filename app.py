@@ -8,10 +8,7 @@ import google.generativeai as genai
 
 from fastapi import FastAPI
 # Ensure compatibility between Pydantic v1 and v2
-try:
-    from pydantic.v1 import BaseModel
-except ImportError:
-    from pydantic import BaseModel
+from pydantic import BaseModel
 from typing import Any, List, Optional
 from pathlib import Path
 
@@ -29,12 +26,12 @@ def convert_path_list(paths: Optional[List[Path]]) -> Optional[List[str]]:
 
 class PredictRequest(BaseModel):
     prompt: str
-    num_repetitions: int = 1
-    output_format: str = "smpl"
+    num_repetitions: int
+    output_format: str
 
 class PredictResponse(BaseModel):
     json_file: Optional[Any]
-    animation: Optional[List[str]]
+    animation: Optional[Any]
 
 # Create FastAPI app
 app = FastAPI(
@@ -99,10 +96,15 @@ async def on_startup():
     predictor.setup()
 
 
-@app.post("/predict", response_model=PredictResponse)
-def predict_motion(req: PredictRequest):
+
+from fastapi import Body
+
+@app.post("/predict")
+def predict_motion(req: PredictRequest = Body(...)):
+    print(f"prompt = {req.prompt}, num_repetitions = {req.num_repetitions}, output_format = {req.output_format}")
     # 프롬프트 정제 (이미 추가되어 있다고 가정)
     refined_prompt = refine_prompt(req.prompt)
+    print(f"refined_prompt = {refined_prompt}")
     # Run inference with 정제된 프롬프트
     output: ModelOutput = predictor.predict(
         prompt=refined_prompt,
@@ -126,7 +128,7 @@ def predict_motion(req: PredictRequest):
     shape = list(motions_np.shape)
     framecount = shape[0] if len(shape) > 0 else 0
 
-    return {"json_file": {"motions": motions, "shape": shape, "framecount": framecount}}
+    return {"json_file": {"motions": motions, "shape": shape, "framecount": framecount}}  
 
 if __name__ == "__main__":
     import uvicorn

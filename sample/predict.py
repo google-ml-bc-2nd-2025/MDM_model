@@ -156,4 +156,4 @@ class Predictor(BasePredictor):
         else:
             data_dict = motions2hik(all_motions)
 
-        return ModelOutput(json_file=data_dict)
+        return ModelOutput(json_file=data_dict, animation=[])
