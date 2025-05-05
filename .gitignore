@@ -1,0 +1,9 @@
+__pycache__/
+*.py[cod]
+*$py.class
+
+.DS_Store
+src/static/models/
+src/dataset/
+kit/text_mot_match/eval/
+kit/Comp_v6_KLD005/meta/

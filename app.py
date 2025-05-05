@@ -17,6 +17,9 @@ from pathlib import Path
 
 # Import the existing Cog Predictor and ModelOutput from the 'sample' package
 from sample.predict import Predictor, ModelOutput
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Define request and response schemas
 def convert_path_list(paths: Optional[List[Path]]) -> Optional[List[str]]:
