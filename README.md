@@ -11,28 +11,21 @@ This repository provides training and sampling scripts for the Motion Diffusion 
 
 ## Setup Environment
 
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/GuyTevet/motion-diffusion-model.git
-cd motion-diffusion-model
-```
-
-### 2. Install FFmpeg
+### 1. Install FFmpeg
 
 ```bash
 sudo apt update
 sudo apt install ffmpeg
 ```
 
-### 3. Create and activate the Conda environment
+### 2. Create and activate the Conda environment
 
 ```bash
 conda env create -f environment.yml
 conda activate mdm
 ```
 
-### 4. Install additional Python dependencies
+### 3. Install additional Python dependencies
 
 ```bash
 python -m spacy download en_core_web_sm
