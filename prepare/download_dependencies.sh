@@ -11,7 +11,7 @@ mv mdm-dependency/kit.zip kit.zip
 rm -rf mdm-dependency
 rm -rf body_models/smpl
 
-unzip body_models/smpl.zip
+unzip body_models/smpl.zip -d body_models
 unzip t2m.zip
 unzip glove.zip
 unzip kit.zip
