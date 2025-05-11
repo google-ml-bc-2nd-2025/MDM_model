@@ -30,7 +30,7 @@ class ModelOutput(BaseModel):
 
 def get_args():
     args = Namespace()
-    args.fps = 30  # 초당 프레임 수(Frames Per Second), 생성되는 모션의 시간 해상도
+    args.fps = 20  # 초당 프레임 수(Frames Per Second), 생성되는 모션의 시간 해상도
 
     args.model_path = './save/my_humanml_trans_enc_512/model000475000.pt'  # 사용할 학습된 모델 가중치(.pt) 파일 경로
 
@@ -55,7 +55,7 @@ def get_args():
     args.pos_embed_max_len = 5000  # 포지셔널 임베딩의 최대 길이(프레임 수 제한)
     args.mask_frames = False  # 프레임 마스킹 사용 여부
     args.text_encoder_type = 'clip'  # 텍스트 인코더 종류(CLIP 사용)
-    args.num_repetitions = 196  # 샘플링 반복 횟수(여러 개의 샘플 생성)
+    args.num_repetitions = 1  # 샘플링 반복 횟수(여러 개의 샘플 생성)
     
     return args
 
