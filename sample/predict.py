@@ -30,28 +30,32 @@ class ModelOutput(BaseModel):
 
 def get_args():
     args = Namespace()
-    args.fps = 20
-    args.model_path = './save/humanml_mixamo2_trans_enc_512/model000400000.pt'
-    args.guidance_param = 2.5
-    args.unconstrained = False
-    args.dataset = 'humanml'
+    args.fps = 30  # 초당 프레임 수(Frames Per Second), 생성되는 모션의 시간 해상도
 
-    args.cond_mask_prob = 1
-    args.emb_trans_dec = False
-    args.latent_dim = 512
-    args.layers = 8
-    args.arch = 'trans_enc'
+    args.model_path = './save/my_humanml_trans_enc_512/model000475000.pt'  # 사용할 학습된 모델 가중치(.pt) 파일 경로
 
-    args.noise_schedule = 'cosine'
-    args.sigma_small = True
-    args.lambda_vel = 0.0
-    args.lambda_rcxyz = 0.0
-    args.lambda_fc   = 0.0
+    args.guidance_param = 2.5  # Classifier-Free Guidance scale, 1보다 크면 텍스트 조건을 더 강하게 반영
+    args.unconstrained = False  # 무조건 샘플링 여부(일반적으로 False, 조건부 생성)
 
-    args.diffusion_steps   = 50            # MDM 논문 기반 빠른 모델이라면 50
-    args.pos_embed_max_len = 5000          # get_model_args에서 사용
-    args.mask_frames       = False         # 동일
-    args.text_encoder_type = 'clip'        # get_model_args에서 사용
+    args.dataset = 'humanml'  # 사용할 데이터셋 이름(HumanML3D)
+
+    args.cond_mask_prob = 1  # 조건 마스킹 확률(1이면 항상 조건 사용)
+    args.emb_trans_dec = False  # Transformer decoder 사용 여부(일반적으로 encoder만 사용)
+    args.latent_dim = 512  # 모델의 잠재 공간(latent space) 차원 수
+    args.layers = 8  # 트랜스포머 레이어 개수.
+    args.arch = 'trans_enc'  # 모델 아키텍처(트랜스포머 인코더)
+
+    args.noise_schedule = 'cosine'  # 확산모델의 노이즈 스케줄 종류
+    args.sigma_small = True  # 작은 시그마 사용 여부(노이즈 관련 하이퍼파라미터)
+    args.lambda_vel = 0.0  # 속도(velocity) 손실 가중치
+    args.lambda_rcxyz = 0.0  # root-centered xyz 손실 가중치
+    args.lambda_fc = 0.0  # frame consistency 손실 가중치
+
+    args.diffusion_steps = 1000  # 확산모델의 스텝 수(샘플링 속도와 품질에 영향)
+    args.pos_embed_max_len = 5000  # 포지셔널 임베딩의 최대 길이(프레임 수 제한)
+    args.mask_frames = False  # 프레임 마스킹 사용 여부
+    args.text_encoder_type = 'clip'  # 텍스트 인코더 종류(CLIP 사용)
+    args.num_repetitions = 196  # 샘플링 반복 횟수(여러 개의 샘플 생성)
     
     return args
 
@@ -77,7 +81,7 @@ class Predictor(BasePredictor):
         print("Creating model and diffusion...")
         self.model, self.diffusion = create_model_and_diffusion(self.args, self.data)
 
-        print(f"Loading checkpoints from...")
+        print(f"Loading checkpoints from... {self.args.model_path}")
         state_dict = torch.load(self.args.model_path, map_location='cpu')
         load_model_wo_clip(self.model, state_dict)
 
@@ -96,18 +100,19 @@ class Predictor(BasePredictor):
                 is an [nframes x njoints x 3] array of joint rotations in degrees, "root_translation" is an [nframes x 3] \
                 array of (X, Y, Z) positions of the root, and "joint_map" is a list mapping the SMPL joint index to the\
                 corresponding HumanIK joint name',
-                default="smpl",
-                choices=["smpl", "json_file", "humanml3d"],
+                default="json_file",
+                choices=["animation", "json_file"],
             ),
     ) -> ModelOutput:
         args = self.args
         args.num_repetitions = int(num_repetitions)
 
-        self.data = get_dataset_loader(name=self.args.dataset,
-                                  batch_size=args.num_repetitions,
-                                  num_frames=self.num_frames,
-                                  split='test',
-                                  hml_mode='text_only')
+        if args.num_repetitions != num_repetitions:
+            self.data = get_dataset_loader(name=self.args.dataset,
+                                    batch_size=args.num_repetitions,
+                                    num_frames=self.num_frames,
+                                    split='test',
+                                    hml_mode='text_only')
 
         collate_args = [{'inp': torch.zeros(self.num_frames), 'tokens': None, 'lengths': self.num_frames, 'text': str(prompt)}]
         _, model_kwargs = collate(collate_args)
@@ -145,13 +150,10 @@ class Predictor(BasePredictor):
                                get_rotations_back=False)
 
         all_motions = sample.cpu().numpy()
-
-        if output_format == 'json_file' or output_format == 'humanml3d':
-            #return humanml3d           
-            motions_xyz = [
-                all_motions[i].transpose(2, 0, 1)[:self.num_frames].tolist()
-                for i in range(args.num_repetitions)
-            ]
+        # generate.py에서 np.save로 저장하는 포맷과 동일하게 반환
+        if output_format in ['json_file', 'humanml3d']:
+            # float32로 변환 및 리스트로 반환 (json 직렬화 호환)
+            motions_xyz = all_motions.astype('float32').tolist()
             data_dict = {"motions": motions_xyz}
         else:
             data_dict = motions2hik(all_motions)

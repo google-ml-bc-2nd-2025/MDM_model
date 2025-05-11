@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y \
     wget \
     unzip \
     curl \
+    nvidia-container-toolkit \
     && rm -rf /var/lib/apt/lists/*
 
 # Miniconda 설치
@@ -26,11 +27,14 @@ RUN curl -fsSL https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_6
 WORKDIR /workspace/motion-diffusion-model
 
 # MDM 저장소 복제
-RUN git clone https://huggingface.co/datasets/NamYeongCho/mdm-gentest . && \
+RUN git clone https://github.com/google-ml-bc-2nd-2025/MDM_model.git /workspace/motion-diffusion-model
+
+# MDM 데이터 저장소 복제
+RUN git clone https://huggingface.co/datasets/NamYeongCho/HumanML3D_new  dataset/HumalML3D && \
     git lfs install
 
 # Conda 환경 생성 및 활성화
-COPY environment.yml .
+COPY * .
 RUN conda env create -f environment.yml && \
     echo "conda activate mdm" >> ~/.bashrc
 
@@ -43,7 +47,7 @@ RUN python -m spacy download en_core_web_sm && \
 RUN git clone https://huggingface.co/datasets/NamYeongCho/mdm-dependency /workspace/motion-diffusion-model/mdm-dependency && \
     mkdir -p /workspace/motion-diffusion-model/body_models && \
     mv /workspace/motion-diffusion-model/mdm-dependency/smpl.zip /workspace/motion-diffusion-model/body_models/ && \
-    unzip /workspace/motion-diffusion-model/body_models/smpl.zip -d /workspace/motion-diffusion-model/body_models/
+    unzip -o /workspace/motion-diffusion-model/body_models/smpl.zip -d /workspace/motion-diffusion-model/body_models/
 
 # 모델 다운로드 및 save 디렉토리로 이동
 RUN mkdir -p /workspace/motion-diffusion-model/save && \
@@ -51,7 +55,14 @@ RUN mkdir -p /workspace/motion-diffusion-model/save && \
     mv /workspace/mdm-test-model/* /workspace/motion-diffusion-model/save/
 
 # HumanML3D 텍스트 압축 해제
-RUN unzip /workspace/motion-diffusion-model/datasets/HumanML3D/text.zip -d /workspace/motion-diffusion-model/datasets/HumanML3D/
+RUN if [ -f /workspace/motion-diffusion-model/datasets/HumanML3D/texts.zip ]; then \
+    echo "texts.zip found, proceeding with extraction."; \
+    RUN unzip -o /workspace/motion-diffusion-model/datasets/HumanML3D/texts.zip -d /workspace/motion-diffusion-model/datasets/HumanML3D/ \
+else \
+    echo "texts.zip not found, exiting."; \
+fi
 
+
+EXPOSE 8384
 # 기본 명령어 설정
-CMD [ "conda", "run", "--no-capture-output", "-n", "mdm", "python", "mdm_generate.py" ]
+CMD [ "conda", "run", "--no-capture-output", "-n", "mdm", "python", "app.py" ]

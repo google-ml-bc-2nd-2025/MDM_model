@@ -1,3 +1,4 @@
+import random
 import pydantic.main
 from pydantic import BaseModel as PydanticBaseModel
 pydantic.main.ModelMetaclass = PydanticBaseModel.__class__
@@ -40,7 +41,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Initialize the predictor
+# Initialize the Predictor
 predictor = Predictor()
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
@@ -60,19 +61,19 @@ def refine_prompt(prompt: str) -> str:
 
     예시:
     입력 텍스트: 활기차게 걷기
-    변환된 텍스트: Walks energetically with arms swinging and chest lifted
+    변환된 텍스트: a person walks energetically with arms swinging and chest lifted
 
     입력 텍스트: 슬프게 고개를 숙임
-    변환된 텍스트: Slowly lowers head while shoulders droop to express sadness
+    변환된 텍스트: a person slowly lowers head while shoulders droop to express sadness
 
     입력 텍스트: 화난 듯이 빠르게 달려듦
-    변환된 텍스트: Charges forward rapidly with clenched fists and stiff posture
+    변환된 텍스트: a person charges forward rapidly with clenched fists and stiff posture
 
     입력 텍스트: 부끄럽게 손을 흔듦
-    변환된 텍스트: Waves hand gently while looking down and shifting body weight shyly
+    변환된 텍스트: a person waves hand gently while looking down and shifting body weight shyly
 
     입력 텍스트: 기쁘게 점프하며 팔을 듦
-    변환된 텍스트: Jumps upward with both arms raised high, expressing joy
+    변환된 텍스트: a person jumps upward with both arms raised high, expressing joy
 
     출력 형식:
     - 한 문장으로 된 명확한 동작 설명 (영어로만)
@@ -93,6 +94,7 @@ def refine_prompt(prompt: str) -> str:
 @app.on_event("startup")
 async def on_startup():
     # Load model, diffusion, and cache CLIP weights
+    print("Loading model and diffusion...")
     predictor.setup()
 
 
