@@ -104,4 +104,25 @@ python -m sample.generate \
   --num_repetitions 3
 ```
 
-## License
+### Setting Up the API Server
+
+Follow these steps to configure and run the API server:
+
+1. **Get Your Google API Key**  
+   Visit [https://aistudio.google.com/apikey](https://aistudio.google.com/apikey) and generate an API key.
+
+2. **Configure Environment Variables**  
+   Create or edit the `.env` file in the project root with the following entries:
+   ```env
+   GOOGLE_API_KEY=your_generated_api_key
+   API_PORT=8384  # Optional: Change the port if needed (default is 8384)
+
+3. **Activate the Conda Environment**
+   Make sure you're using the mdm Conda environment:
+   ```bash
+   conda activate mdm
+
+4. **Run the server**
+   Start the API Server
+   ```bash
+   python app.py
